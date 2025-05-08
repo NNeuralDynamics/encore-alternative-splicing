@@ -10,7 +10,16 @@ import sys
 
 
 def get_all_splice(ensg):
-
+    ''' a function to load the rMATS data from the ../data directory and extract the specified gene
+        argument:
+            ensg: the Ensembl ID for the gene
+        returns:
+            df_as: a dictionary of datasets pertaining to the gene specified. Schema:
+            { cell_line:
+                rbp:
+                    splice_type: dataframe containing the extracted alternative splicing data
+            }
+    '''
     rbp_list = dict()
 
     for cl in ['HepG2', 'K562']:
@@ -32,7 +41,11 @@ def get_all_splice(ensg):
                 if not df.empty: df_as[cl][rbp][spl] = df
     return df_as
 
-def save_data(df_dict):
+def save_data(df_dict, gene):
+    ''' a function to save the data extracted to the ../output folder
+        argument:
+            df_dict: the dictionary of data frame passed by the get_all_splice function
+    '''
     df_list = dict()
     for spl in ['SE', 'MXE', 'A5SS', 'A3SS', 'RI']: df_list[spl] = list()
     df_all = dict()
@@ -45,13 +58,17 @@ def save_data(df_dict):
 
     os.makedirs('../output/'+gene, exist_ok=True)
     for key, value in df_all.items():
-        value.to_csv('../output/'+gene+'/'+gene+'_'+key+'.csv', index=True)
+        value.reset_index(drop=True).to_csv('../output/'+gene+'/'+gene+'_'+key+'.csv', index=True)
 
 
-if len(sys.argv) < 2:
-    print('ERROR: please specify Ensembl ID of gene')
-    exit(1)
-gene = str(sys.argv[1])
-all_splice = get_all_splice(gene)
-save_data(all_splice)
+def main(argv):
+    if len(sys.argv) < 2:
+        print('ERROR: please specify Ensembl ID of gene')
+        exit(1)
+    gene = str(argv[1])
+    all_splice = get_all_splice(gene)
+    save_data(all_splice, gene)
 
+
+if __name__ == "__main__":
+    main(sys.argv)
